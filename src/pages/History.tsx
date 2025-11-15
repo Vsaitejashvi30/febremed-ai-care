@@ -79,89 +79,107 @@ const History = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-          <Button onClick={() => navigate('/assessment')}>
-            <Activity className="mr-2 h-4 w-4" />
-            New Assessment
-          </Button>
-        </div>
+    <div className="min-h-screen bg-background relative">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-secondary/30 via-secondary/15 to-transparent pointer-events-none" />
+      
+      <div className="relative z-10 py-8 px-4">
+        <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
+          <div className="flex items-center justify-between mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="hover:bg-secondary/50 transition-colors"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+            <Button 
+              onClick={() => navigate('/assessment')}
+              className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              New Assessment
+            </Button>
+          </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl">Assessment History</CardTitle>
-            <CardDescription>
-              View and manage your past fever assessments
-            </CardDescription>
-          </CardHeader>
-        </Card>
+          <Card className="mb-8 shadow-lg border-2 bg-white/95 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b">
+              <CardTitle className="text-3xl font-bold">Assessment History</CardTitle>
+              <CardDescription className="text-base mt-2">
+                View and manage your past fever assessments
+              </CardDescription>
+            </CardHeader>
+          </Card>
 
         {assessments.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">No assessments yet</p>
-              <Button onClick={() => navigate('/assessment')}>
+          <Card className="shadow-lg border-2 bg-white/95 backdrop-blur-sm">
+            <CardContent className="py-16 text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary/50 mb-6">
+                <Activity className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <p className="text-lg text-muted-foreground mb-6">No assessments yet</p>
+              <Button 
+                onClick={() => navigate('/assessment')}
+                size="lg"
+                className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+              >
+                <Activity className="mr-2 h-5 w-5" />
                 Start Your First Assessment
               </Button>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {assessments.map((assessment) => (
+            {assessments.map((assessment, index) => (
               <Card
                 key={assessment.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className="cursor-pointer hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 bg-white/95 backdrop-blur-sm animate-in fade-in slide-in-from-bottom duration-500"
+                style={{ animationDelay: `${index * 100}ms` }}
                 onClick={() => navigate(`/results/${assessment.id}`)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-3">
-                        <Badge className={getDecisionColor(assessment.decision)}>
+                    <div className="space-y-4 flex-1">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <Badge className={`${getDecisionColor(assessment.decision)} text-sm px-3 py-1 font-semibold`}>
                           {assessment.decision.replace(/_/g, ' ')}
                         </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {format(new Date(assessment.created_at), 'MMM dd, yyyy HH:mm')}
+                        <span className="text-sm text-muted-foreground font-medium">
+                          {format(new Date(assessment.created_at), 'MMM dd, yyyy • HH:mm')}
                         </span>
                       </div>
                       
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Temperature</p>
-                          <p className="font-semibold">{assessment.temperature}°C</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-2">
+                        <div className="p-3 rounded-lg bg-secondary/30">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Temperature</p>
+                          <p className="text-xl font-bold text-foreground">{assessment.temperature}°C</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Duration</p>
-                          <p className="font-semibold">{assessment.duration_days} days</p>
+                        <div className="p-3 rounded-lg bg-secondary/30">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Duration</p>
+                          <p className="text-xl font-bold text-foreground">{assessment.duration_days} days</p>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Recovery</p>
-                          <p className="font-semibold text-success">
+                        <div className="p-3 rounded-lg bg-success/10">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Recovery</p>
+                          <p className="text-xl font-bold text-success">
                             {Math.round(assessment.recovery_probability * 100)}%
                           </p>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Risk</p>
-                          <p className="font-semibold">
+                        <div className="p-3 rounded-lg bg-secondary/30">
+                          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Risk</p>
+                          <p className="text-xl font-bold text-foreground">
                             {assessment.risk_assessment}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 ml-4">
+                    <div className="flex gap-2 ml-6">
                       <Button
                         variant="outline"
                         size="icon"
+                        className="hover:bg-primary/10 hover:border-primary transition-all hover:scale-110"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/report/${assessment.id}`);
@@ -172,6 +190,7 @@ const History = () => {
                       <Button
                         variant="outline"
                         size="icon"
+                        className="hover:bg-destructive/10 hover:border-destructive hover:text-destructive transition-all hover:scale-110"
                         onClick={(e) => handleDelete(assessment.id, e)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -183,6 +202,7 @@ const History = () => {
             ))}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

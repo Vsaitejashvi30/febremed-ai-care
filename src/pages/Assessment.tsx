@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
+import { PrescriptionUploader, MedicationData } from "@/components/PrescriptionUploader";
 
 const SYMPTOMS = [
   "Body ache",
@@ -34,6 +36,7 @@ const Assessment = () => {
     temperature: "",
     duration: "",
     medicationType: "",
+    medicationName: "",
     age: "",
     location: "",
     daysOnMedication: "",
@@ -41,6 +44,7 @@ const Assessment = () => {
     symptoms: [] as string[],
     comorbidities: [] as string[],
   });
+  const [prescriptionData, setPrescriptionData] = useState<MedicationData | null>(null);
 
   const handleSymptomToggle = (symptom: string) => {
     setFormData(prev => ({
@@ -60,7 +64,24 @@ const Assessment = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleMedicationExtracted = (data: MedicationData) => {
+    setFormData(prev => ({
+      ...prev,
+      medicationType: data.medication_type.toLowerCase(),
+      medicationName: data.medication_name ?? "",
+    }));
+    setPrescriptionData(data);
+    const medName = data.medication_name || 'Medication';
+    const confidenceLabel = data.confidence.charAt(0).toUpperCase() + data.confidence.slice(1);
+    toast.success(`${medName} identified (${data.medication_type}) — confidence ${confidenceLabel}`);
+  };
+
+  const handleExtractionError = (message: string) => {
+    setPrescriptionData(null);
+    toast.error(message);
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!formData.temperature || !formData.duration || !formData.medicationType || 
@@ -77,13 +98,18 @@ const Assessment = () => {
     setLoading(true);
 
     try {
+      const medicationTypeLabel = formData.medicationType
+        ? formData.medicationType.charAt(0).toUpperCase() + formData.medicationType.slice(1)
+        : "";
+
       // Call the edge function for AI analysis
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('analyze-fever', {
         body: { 
           patientData: {
             temperature: parseFloat(formData.temperature),
             duration: parseInt(formData.duration),
-            medicationType: formData.medicationType,
+            medicationType: medicationTypeLabel,
+            medicationName: formData.medicationName,
             age: parseInt(formData.age),
             location: formData.location,
             daysOnMedication: parseInt(formData.daysOnMedication),
@@ -148,6 +174,32 @@ const Assessment = () => {
 
       if (predictionError) throw predictionError;
 
+      if (prescriptionData) {
+        const durationValue = prescriptionData.duration_days;
+        const parsedDuration = typeof durationValue === 'number' && Number.isFinite(durationValue)
+          ? Math.round(durationValue)
+          : null;
+
+        const { error: prescriptionError } = await supabase
+          .from('prescription_uploads')
+          .insert({
+            assessment_id: assessment.id,
+            image_url: null,
+            extracted_text: prescriptionData.extracted_text,
+            medication_name: prescriptionData.medication_name || null,
+            medication_type: prescriptionData.medication_type,
+            dosage: prescriptionData.dosage,
+            frequency: prescriptionData.frequency,
+            duration_days: parsedDuration,
+            gemini_confidence: prescriptionData.confidence,
+          });
+
+        if (prescriptionError) {
+          console.error('Prescription save error:', prescriptionError);
+          toast.warning('Assessment saved, but prescription details could not be stored.');
+        }
+      }
+
       toast.success("Assessment completed successfully!");
       navigate(`/results/${assessment.id}`);
     } catch (error: any) {
@@ -159,24 +211,29 @@ const Assessment = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Home
-        </Button>
+    <div className="min-h-screen bg-background relative">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-secondary/30 via-secondary/15 to-transparent pointer-events-none" />
+      
+      <div className="relative z-10 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="mb-6 hover:bg-secondary/50"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Fever Assessment</CardTitle>
-            <CardDescription>
-              Please provide accurate information for the best analysis
-            </CardDescription>
-          </CardHeader>
+          <Card className="border-2 shadow-xl bg-white/95 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b">
+              <CardTitle className="text-3xl font-bold text-foreground">Fever Assessment</CardTitle>
+              <CardDescription className="text-base mt-2">
+                Please provide accurate information for the best analysis
+              </CardDescription>
+            </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,23 +287,6 @@ const Assessment = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="medicationType">Medication Type *</Label>
-                  <Select value={formData.medicationType} onValueChange={(value) => setFormData({ ...formData, medicationType: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select medication" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Paracetamol">Paracetamol (Fever Medicine)</SelectItem>
-                      <SelectItem value="Ibuprofen">Ibuprofen (Fever Medicine)</SelectItem>
-                      <SelectItem value="Antibiotic">Antibiotic</SelectItem>
-                      <SelectItem value="Antiviral">Antiviral</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="daysOnMedication">Days on Medication *</Label>
                   <Input
@@ -257,6 +297,54 @@ const Assessment = () => {
                     onChange={(e) => setFormData({ ...formData, daysOnMedication: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="p-6 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5 hover:bg-primary/10 transition-colors">
+                  <h2 className="text-lg font-semibold mb-2 text-foreground">Option 1: Upload Prescription</h2>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Have a prescription photo? Upload it and we will try to extract the medication details automatically.
+                  </p>
+                  <PrescriptionUploader
+                    onMedicationExtracted={handleMedicationExtracted}
+                    onError={handleExtractionError}
+                  />
+                </div>
+
+                <div className="relative py-2">
+                  <Separator className="my-4" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="px-3 bg-background text-sm text-slate-500">OR</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="medicationType">Medication Type *</Label>
+                    <Select value={formData.medicationType} onValueChange={(value) => setFormData({ ...formData, medicationType: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select medication" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="antipyretic">Antipyretic (Fever Medicine)</SelectItem>
+                        <SelectItem value="antibiotic">Antibiotic</SelectItem>
+                        <SelectItem value="antiviral">Antiviral</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="medicationName">Medication Name</Label>
+                    <Input
+                      id="medicationName"
+                      type="text"
+                      placeholder="e.g., Paracetamol 500mg"
+                      value={formData.medicationName}
+                      onChange={(e) => setFormData({ ...formData, medicationName: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -304,7 +392,27 @@ const Assessment = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {prescriptionData && (
+                <div className="rounded-lg border-l-4 border-primary bg-primary/10 p-4 text-foreground shadow-sm">
+                  <h3 className="font-semibold mb-2 text-primary">Prescription Analyzed</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><strong>Medication:</strong> {prescriptionData.medication_name || 'Not detected'}</p>
+                    <p><strong>Type:</strong> {prescriptionData.medication_type}</p>
+                    {prescriptionData.dosage && (
+                      <p><strong>Dosage:</strong> {prescriptionData.dosage}</p>
+                    )}
+                    {prescriptionData.frequency && (
+                      <p><strong>Frequency:</strong> {prescriptionData.frequency}</p>
+                    )}
+                    {typeof prescriptionData.duration_days === 'number' && Number.isFinite(prescriptionData.duration_days) && (
+                      <p><strong>Duration:</strong> {prescriptionData.duration_days} days</p>
+                    )}
+                    <p className="text-xs mt-2 text-muted-foreground">Confidence: {prescriptionData.confidence.charAt(0).toUpperCase() + prescriptionData.confidence.slice(1)}</p>
+                  </div>
+                </div>
+              )}
+
+              <Button type="submit" className="w-full mt-6" size="lg" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -317,6 +425,7 @@ const Assessment = () => {
             </form>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

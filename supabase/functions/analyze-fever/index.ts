@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -14,19 +17,32 @@ serve(async (req) => {
     const { patientData } = await req.json();
     console.log('Analyzing patient data:', patientData);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") ?? Deno.env.get("VITE_GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured for analyze-fever function");
     }
 
-    const systemPrompt = `You are a medical AI assistant helping patients understand fever recovery. 
+  const model = Deno.env.get("GEMINI_MODEL") ?? "models/gemini-flash-latest";
+
+    const prompt = `You are a medical AI assistant helping patients understand fever recovery.
 Analyze the following patient data and provide clinical decision support.
-IMPORTANT: Always recommend consulting a doctor for final decisions. 
+IMPORTANT: Always recommend consulting a doctor for final decisions.
 Never provide definitive medical advice. Provide evidence-based guidance only.
 
-You MUST respond with ONLY valid JSON (no markdown, no code blocks, no extra text).`;
+Respond ONLY with valid JSON (no markdown, no code blocks, no extra text) using this schema:
+{
+  "decision": "CONTINUE" | "CONSULT_DOCTOR" | "LIKELY_SAFE_TO_STOP",
+  "recovery_probability": number,
+  "confidence": number,
+  "explanation": string,
+  "key_factors": string[],
+  "risk_assessment": "LOW" | "MEDIUM" | "HIGH",
+  "next_steps": string[],
+  "warning_signs": string[],
+  "doctor_note": string
+}
 
-    const userPrompt = `Patient Assessment:
+Patient Assessment:
 - Age: ${patientData.age} years
 - Temperature: ${patientData.temperature}°C
 - Fever Duration: ${patientData.duration} days
@@ -35,96 +51,69 @@ You MUST respond with ONLY valid JSON (no markdown, no code blocks, no extra tex
 - Compliance: ${patientData.compliance}%
 - Symptoms: ${patientData.symptoms.join(', ')}
 - Comorbidities: ${patientData.comorbidities.join(', ') || 'None'}
-- Location: ${patientData.location}
+- Location: ${patientData.location}`;
 
-Please analyze this and provide:
-1. Recovery probability (0-1 decimal)
-2. Confidence level (0-1 decimal)
-3. Decision: CONTINUE / CONSULT_DOCTOR / LIKELY_SAFE_TO_STOP
-4. Detailed explanation
-5. Key factors contributing to decision
-6. Risk assessment (LOW/MEDIUM/HIGH)
-7. Next steps (array of strings)
-8. Warning signs to watch for (array of strings)
-9. Clinical note for doctor
+    console.log("Calling Gemini model:", model);
 
-Respond ONLY with valid JSON in this exact format:
-{
-  "decision": "CONTINUE" | "CONSULT_DOCTOR" | "LIKELY_SAFE_TO_STOP",
-  "recovery_probability": 0.75,
-  "confidence": 0.85,
-  "explanation": "detailed explanation here",
-  "key_factors": ["factor1", "factor2"],
-  "risk_assessment": "LOW" | "MEDIUM" | "HIGH",
-  "next_steps": ["step1", "step2"],
-  "warning_signs": ["sign1", "sign2"],
-  "doctor_note": "clinical recommendation"
-}`;
-
-    console.log('Calling Lovable AI...');
-    
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt }
-        ],
-        temperature: 0.3,
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.3,
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('AI gateway error:', response.status, errorText);
-      
+      console.error("Gemini API error", response.status, errorText);
+
       if (response.status === 429) {
-        return new Response(JSON.stringify({ 
-          error: "Rate limit exceeded. Please try again in a moment." 
-        }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Gemini rate limit exceeded. Please try again shortly." }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
       }
-      
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ 
-          error: "AI service credits exhausted. Please contact support." 
-        }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      
-      throw new Error(`AI gateway error: ${response.status}`);
+
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('AI response received');
-    
-    let aiContent = data.choices[0].message.content;
-    console.log('Raw AI content:', aiContent);
-    
-    // Clean up the response - remove markdown code blocks if present
-    aiContent = aiContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    
-    let aiAnalysis;
-    try {
-      aiAnalysis = JSON.parse(aiContent);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError, 'Content:', aiContent);
-      throw new Error('Failed to parse AI response as JSON');
+    const candidate = data.candidates?.[0];
+    const rawText = candidate?.content?.parts?.[0]?.text?.trim();
+
+    if (!rawText) {
+      console.error("Gemini response missing text", data);
+      throw new Error("Gemini response missing content");
     }
 
-    console.log('Successfully parsed AI analysis:', aiAnalysis);
+    const cleaned = rawText.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+
+    let aiAnalysis;
+    try {
+      aiAnalysis = JSON.parse(cleaned);
+    } catch (parseError) {
+      console.error("Gemini JSON parse error", parseError, cleaned);
+      throw new Error("Failed to parse Gemini response as JSON");
+    }
 
     return new Response(JSON.stringify(aiAnalysis), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
     console.error('Error in analyze-fever function:', error);

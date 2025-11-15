@@ -60,6 +60,70 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Prescription OCR Feature
+
+The FebreMed assessment flow now supports extracting medication details from a prescription image.
+
+### Backend setup
+
+1. Install system-level Tesseract OCR:
+	- Windows: download from https://github.com/UB-Mannheim/tesseract/wiki and install (note the installation path if you need to set `TESSERACT_CMD`).
+	- macOS: `brew install tesseract`
+	- Ubuntu/Debian: `sudo apt-get install tesseract-ocr`
+2. Create and activate a virtual environment inside `backend/`:
+	```pwsh
+	cd backend
+	python -m venv venv
+	venv\Scripts\activate
+	```
+3. Install Python dependencies:
+	```pwsh
+	pip install -r requirements.txt
+	```
+4. Set the necessary environment variables (see `.env` for placeholders) and start the Flask server:
+	```pwsh
+	$env:FLASK_ENV="development"
+	$env:GEMINI_API_KEY="your_gemini_api_key"
+	python app.py
+	```
+
+### Frontend setup
+
+Keep the existing Vite development workflow:
+
+```pwsh
+npm install
+npm run dev
+```
+
+Requests to `/api/*` are proxied to the Flask server during development.
+
+### Environment variables
+
+Populate the following entries in `.env`:
+
+- `VITE_SUPABASE_URL` / `VITE_SUPABASE_PROJECT_ID` / `VITE_SUPABASE_PUBLISHABLE_KEY`
+- `VITE_GEMINI_API_KEY` (exposed to the frontend for future Gemini usage)
+- `GEMINI_API_KEY` (used by the Flask backend)
+- Optional: `GEMINI_MODEL` (defaults to `models/gemini-flash-latest`, which offers higher free-tier quota than the pro model; override in `.env` if you have access to a higher-tier model)
+- `FLASK_ENV` / `FLASK_APP`
+- Optional: `TESSERACT_CMD` if Tesseract is not in `PATH`.
+
+### Database migration
+
+Run the Supabase migration to create the `prescription_uploads` table after pulling the latest changes:
+
+```pwsh
+supabase migration up
+```
+
+### Feature flow
+
+1. Upload a prescription image in the assessment form.
+2. The backend extracts text with Tesseract and sends it to Google Gemini for interpretation.
+3. The frontend auto-populates medication fields and shows the extracted details.
+4. Submitting the assessment stores both the standard assessment data and the derived prescription details (`prescription_uploads` table).
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/c9f26453-fc97-48aa-bb15-98a835383126) and click on Share -> Publish.

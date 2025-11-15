@@ -95,40 +95,47 @@ const Results = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => navigate(`/report/${id}`)}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Doctor Report
-          </Button>
-        </div>
+    <div className="min-h-screen bg-background relative">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
+      <div className="fixed inset-0 bg-gradient-to-br from-secondary/30 via-secondary/15 to-transparent pointer-events-none" />
+      
+      <div className="relative z-10 py-8 px-4">
+        <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+          <div className="flex items-center justify-between mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="hover:bg-secondary/50 transition-colors"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate(`/report/${id}`)}
+              className="shadow-sm hover:shadow-md transition-all hover:scale-105"
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Generate Doctor Report
+            </Button>
+          </div>
 
         {/* Decision Card */}
-        <Card className={getDecisionColor(assessment.decision)}>
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              {assessment.decision === 'CONSULT_DOCTOR' && <AlertTriangle className="h-6 w-6" />}
-              {assessment.decision === 'CONTINUE' && <Activity className="h-6 w-6" />}
-              {assessment.decision === 'LIKELY_SAFE_TO_STOP' && <CheckCircle2 className="h-6 w-6" />}
+        <Card className={`${getDecisionColor(assessment.decision)} shadow-2xl border-2 animate-in fade-in slide-in-from-top duration-500`}>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-3xl font-bold flex items-center gap-3">
+              {assessment.decision === 'CONSULT_DOCTOR' && <AlertTriangle className="h-8 w-8 animate-pulse" />}
+              {assessment.decision === 'CONTINUE' && <Activity className="h-8 w-8" />}
+              {assessment.decision === 'LIKELY_SAFE_TO_STOP' && <CheckCircle2 className="h-8 w-8" />}
               {assessment.decision.replace(/_/g, ' ')}
             </CardTitle>
-            <CardDescription className="text-inherit opacity-90">
+            <CardDescription className="text-inherit opacity-90 text-base mt-2">
               AI Analysis Result
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-lg opacity-90">
+            <p className="text-lg opacity-90 leading-relaxed">
               {prediction.explanation}
             </p>
           </CardContent>
@@ -136,27 +143,29 @@ const Results = () => {
 
         {/* Recovery & Confidence */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recovery Probability</CardTitle>
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-2 animate-in fade-in slide-in-from-left duration-500 delay-150">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl">Recovery Probability</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-3xl font-bold text-success">
+            <CardContent className="space-y-4">
+              <div className="text-5xl font-bold text-success mb-2">
                 {Math.round(assessment.recovery_probability * 100)}%
               </div>
-              <Progress value={assessment.recovery_probability * 100} className="h-3" />
+              <Progress value={assessment.recovery_probability * 100} className="h-4 bg-secondary" />
+              <p className="text-sm text-muted-foreground">Based on your symptoms and treatment</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Analysis Confidence</CardTitle>
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-2 animate-in fade-in slide-in-from-right duration-500 delay-150">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl">Analysis Confidence</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-3xl font-bold text-primary">
+            <CardContent className="space-y-4">
+              <div className="text-5xl font-bold text-primary mb-2">
                 {Math.round(assessment.confidence * 100)}%
               </div>
-              <Progress value={assessment.confidence * 100} className="h-3" />
+              <Progress value={assessment.confidence * 100} className="h-4 bg-secondary" />
+              <p className="text-sm text-muted-foreground">AI model confidence level</p>
             </CardContent>
           </Card>
         </div>
@@ -174,16 +183,17 @@ const Results = () => {
         </Card>
 
         {/* Key Factors */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Key Factors</CardTitle>
+        <Card className="shadow-lg border-2 animate-in fade-in duration-500 delay-300">
+          <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b">
+            <CardTitle className="text-2xl">Key Factors</CardTitle>
+            <CardDescription>Important considerations in this assessment</CardDescription>
           </CardHeader>
-          <CardContent>
-            <ul className="space-y-2">
+          <CardContent className="pt-6">
+            <ul className="space-y-3">
               {prediction.key_factors?.map((factor: string, index: number) => (
-                <li key={index} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>{factor}</span>
+                <li key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors animate-in fade-in slide-in-from-left duration-300" style={{ animationDelay: `${index * 100}ms` }}>
+                  <CheckCircle2 className="h-6 w-6 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-base leading-relaxed">{factor}</span>
                 </li>
               ))}
             </ul>
@@ -243,14 +253,25 @@ const Results = () => {
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-          <Button onClick={() => navigate('/assessment')} size="lg" className="flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <Button 
+            onClick={() => navigate('/assessment')} 
+            size="lg" 
+            className="flex-1 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
+            <Activity className="mr-2 h-5 w-5" />
             New Assessment
           </Button>
-          <Button onClick={() => navigate('/history')} variant="secondary" size="lg" className="flex-1">
+          <Button 
+            onClick={() => navigate('/history')} 
+            variant="secondary" 
+            size="lg" 
+            className="flex-1 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          >
             View History
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

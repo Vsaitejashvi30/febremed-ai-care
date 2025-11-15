@@ -8,26 +8,28 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 280 15% 97%;
     --foreground: 217 33% 17%;
 
     --card: 0 0% 100%;
     --card-foreground: 217 33% 17%;
+    
+    --lavender: 280 30% 90%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 217 33% 17%;
 
-    --primary: 220 71% 40%;
+    --primary: 200 78% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 13% 96%;
-    --secondary-foreground: 220 71% 40%;
+    --secondary: 280 25% 92%;
+    --secondary-foreground: 200 78% 50%;
 
-    --muted: 220 13% 96%;
+    --muted: 280 20% 94%;
     --muted-foreground: 220 9% 46%;
 
-    --accent: 220 13% 96%;
-    --accent-foreground: 217 33% 17%;
+    --accent: 12 66% 63%;
+    --accent-foreground: 0 0% 100%;
 
     --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
@@ -38,13 +40,13 @@ All colors MUST be HSL.
     --destructive: 0 73% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 220 71% 40%;
+    --border: 280 15% 85%;
+    --input: 280 15% 85%;
+    --ring: 200 78% 50%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 280 20% 96%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
 
@@ -56,9 +58,9 @@ All colors MUST be HSL.
 
     --sidebar-accent-foreground: 240 5.9% 10%;
 
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 186 20% 88%;
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 200 78% 50%;
   }
 
   .dark {
@@ -71,16 +73,16 @@ All colors MUST be HSL.
     --popover: 220 27% 20%;
     --popover-foreground: 0 0% 100%;
 
-    --primary: 220 71% 40%;
+    --primary: 200 78% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 27% 25%;
+    --secondary: 186 25% 85%;
     --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 27% 25%;
+    --muted: 186 25% 85%;
     --muted-foreground: 220 9% 65%;
 
-    --accent: 220 27% 25%;
+    --accent: 12 66% 63%;
     --accent-foreground: 0 0% 100%;
 
     --success: 160 84% 39%;
@@ -92,17 +94,17 @@ All colors MUST be HSL.
     --destructive: 0 73% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 27% 25%;
-    --input: 220 27% 25%;
-    --ring: 220 71% 60%;
+    --border: 186 20% 30%;
+    --input: 186 20% 30%;
+    --ring: 200 78% 60%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary: 200 78% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 200 78% 50%;
   }
 }
 
@@ -113,5 +115,47 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes float-delayed {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-30px);
+    }
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.8;
+    }
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-delayed 8s ease-in-out infinite;
+    animation-delay: 1s;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s ease-in-out infinite;
   }
 }
