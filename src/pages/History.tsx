@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, Trash2, FileText, Activity } from "lucide-react";
 import { format } from "date-fns";
+import Logo from "@/components/Logo";
 
 const History = () => {
   const navigate = useNavigate();
@@ -87,14 +88,17 @@ const History = () => {
       <div className="relative z-10 py-8 px-4">
         <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
           <div className="flex items-center justify-between mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="hover:bg-secondary/50 transition-colors"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="hover:bg-secondary/50 transition-colors"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+              <Logo size="sm" />
+            </div>
             <Button 
               onClick={() => navigate('/assessment')}
               className="shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"

@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { PrescriptionUploader, MedicationData } from "@/components/PrescriptionUploader";
+import Logo from "@/components/Logo";
 
 const SYMPTOMS = [
   "Body ache",
@@ -218,14 +219,17 @@ const Assessment = () => {
       
       <div className="relative z-10 py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/')}
-            className="mb-6 hover:bg-secondary/50"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => navigate('/')}
+              className="hover:bg-secondary/50"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+            <Logo size="sm" />
+          </div>
 
           <Card className="border-2 shadow-xl bg-white/95 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b">

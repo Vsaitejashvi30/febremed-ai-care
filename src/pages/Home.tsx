@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Activity, History, Stethoscope, Heart, Shield, Brain, ArrowRight } from "lucide-react";
 import UserMenu from "@/components/UserMenu";
+import Logo from "@/components/Logo";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ const Home = () => {
       <div className="fixed inset-0 bg-gradient-to-br from-secondary/40 via-secondary/20 to-transparent pointer-events-none" />
       
       {/* Navigation */}
-      <div className="relative z-50 absolute top-4 right-4 animate-in fade-in duration-500">
+      <div className="relative z-50 absolute top-4 left-4 right-4 flex items-center justify-between animate-in fade-in duration-500">
+        <Logo size="md" />
         <UserMenu />
       </div>
 

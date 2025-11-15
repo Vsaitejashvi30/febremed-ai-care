@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Activity, ArrowLeft } from "lucide-react";
 import { Session, User } from "@supabase/supabase-js";
+import Logo from "@/components/Logo";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -197,8 +198,8 @@ const Auth = () => {
 
           <Card className="border-2 shadow-2xl bg-white/95 backdrop-blur-md animate-in fade-in slide-in-from-bottom duration-500 delay-150">
             <CardHeader className="text-center bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 border-b pb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mx-auto mb-4 animate-in zoom-in duration-500 delay-300">
-                <Activity className="w-10 h-10 text-primary" />
+              <div className="flex justify-center mb-4 animate-in zoom-in duration-500 delay-300">
+                <Logo size="lg" clickable={false} />
               </div>
               <CardTitle className="text-3xl font-bold mb-2">Welcome to FebreMed</CardTitle>
               <CardDescription className="text-base">

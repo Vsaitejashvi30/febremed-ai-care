@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, FileText, Activity, AlertTriangle, CheckCircle2 } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const Results = () => {
   const { id } = useParams();
@@ -103,14 +104,17 @@ const Results = () => {
       <div className="relative z-10 py-8 px-4">
         <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
           <div className="flex items-center justify-between mb-8">
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/')}
-              className="hover:bg-secondary/50 transition-colors"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/')}
+                className="hover:bg-secondary/50 transition-colors"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+              <Logo size="sm" />
+            </div>
             <Button
               variant="outline"
               onClick={() => navigate(`/report/${id}`)}
